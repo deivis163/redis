@@ -1,0 +1,4 @@
+all:
+  hosts:
+    debiansrv:
+      ansible_ssh_host: 5.199.168.78

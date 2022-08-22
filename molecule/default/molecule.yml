@@ -1,0 +1,44 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: delegated
+  # Argumentai cherryservers_server moduliui
+  auth_token: ${AUTH_TOKEN:-$CHERRY_AUTH_TOKEN}
+  project_id: ${PROJECT_ID}
+  plan_id: ${PLAN_ID}
+  region: ${REGION}
+  ssh_label:
+  - ${SSH_LABEL}
+  # Duomenys prisijungimui prie instance'ų
+  ssh_user: ${SSH_USER:-root}
+  ssh_port: ${SSH_PORT:-'22'}
+  identity_file: ${IDENTITY_FILE:-'~/.ssh/id_rsa'}
+
+lint: |
+  set -e
+  yamllint .
+  ansible-lint .
+
+platforms:
+- name: ${PREFIX}-${MOLECULE_SCENARIO_NAME}-ubuntu-focal
+  image: Ubuntu 20.04 64bit
+- name: ${PREFIX}-${MOLECULE_SCENARIO_NAME}-centos-7
+  image: CentOS 7 64bit
+#- name: ${PREFIX}-${MOLECULE_SCENARIO_NAME}-alma-9
+#  image: Alma 9 64bit
+provisioner:
+  name: ansible
+  playbooks:
+    create: create.yml
+  inventory:
+    hosts:
+      all:
+        vars:
+          # certbot_auth_method: ${MOLECULE_SCENARIO_NAME}
+          certbot_auth_method: standalone
+
+verifier:
+  name: ansible
+

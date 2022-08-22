@@ -1,0 +1,6 @@
+# Scenarijui reikalingos Ansible Galaxy rolės
+
+#- src: git@bitbucket.org:cherryservers/ufw.git
+#  scm: git
+#  version: 1.0.1
+

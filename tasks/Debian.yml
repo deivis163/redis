@@ -1,0 +1,7 @@
+---
+- name: ensure redis is installed (Debian)
+  apt:
+    name: redis-server
+    state: present
+    update_cache: true
+

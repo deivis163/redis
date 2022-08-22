@@ -1,0 +1,29 @@
+---
+# Variable setup.
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Include centos task.
+  import_tasks: RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- name: Include debian task.
+  import_tasks: Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- name: Redis config
+  lineinfile:
+    dest: "{{ redis_conf_path }}"
+    regexp: "{{  item.regexp  }}"
+    line: "{{  item.line  }}"
+    state: present
+  with_items:
+    - regexp: "^bind"
+      line: bind "{{  redis_bind_interface  }}"
+    - regexp: "^port"
+      line:  bind "{{  redis_bind_interface  }}"
+    - regexp: "^timeout"
+      line:  timeout "{{  redis_timeout  }}"
+    - regexp: "^maxmemory"
+      line:  maxmemory "{{  redis_maxmemory  }}"
+  notify: restart redis

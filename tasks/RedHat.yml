@@ -1,0 +1,12 @@
+---
+# ansible_facts.os_family == RedHat
+- name: ensure epel repo is installed (RedHat)
+  yum:
+    name: epel-release
+    state: present
+    update_cache: true
+- name: ensure redis is installed (RedHat)
+  yum:
+    name: redis
+    state: present
+    update_cache: true

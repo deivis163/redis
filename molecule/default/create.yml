@@ -1,0 +1,83 @@
+---
+# Jeigu serverių sukūrimą su cherryservers_server moduliu suksime cikle
+# (su with_items ar pan.), juos kursime nuosekliai ir tai užtruks visą
+# amžinybę. Geriau dinamiškai sukurkime grupę, joje kiekvienam tariamam
+# hostui priskirkime argumentus, kuriuos reikia perduoti moduliui ir
+# vėliau paleiskime serverių kūrimą lygiagrečiai.
+- name: Create dummy group
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  no_log: '{{ molecule_no_log }}'
+  tasks:
+  - name: Create dummy host group
+    add_host:
+      name: '{{ item.name }}'
+      groups: dummy_hosts
+      # cherryservers_server modulio argumentai, su kuriais
+      # reikia sukurti molecule instance'ą
+      args:
+        auth_token: '{{ molecule_yml.driver.auth_token }}'
+        project_id: '{{ molecule_yml.driver.project_id }}'
+        hostname: '{{ item.name }}'
+        plan_id: '{{ molecule_yml.driver.plan_id }}'
+        region: '{{ molecule_yml.driver.region }}'
+        image: '{{ item.image }}'
+        ssh_label: 'SSHKEY'        
+    with_items: '{{ molecule_yml.platforms }}'
+
+
+# Pasinaudokime tariamų hostų grupe ir lygiagrečiai sukurkime visus
+# reikiamus molecule instance'us
+- name: Create instances
+  hosts: dummy_hosts
+  connection: local
+  gather_facts: no
+  no_log: '{{ molecule_no_log }}'
+  tasks:
+
+  - name: Create instance
+    cherryservers_server:
+      auth_token: '{{ args.auth_token }}'
+      project_id: '{{ args.project_id }}'
+      hostname: '{{ args.hostname }}'
+      plan_id: '{{ args.plan_id }}'
+      region: '{{ args.region }}'
+      image: '{{ args.image }}'
+      ssh_label: '{{ args.ssh_label }}'
+      state: active
+    register: instance
+    delegate_to: localhost
+  
+  - name: Set instance configuration
+    set_fact:
+      instance_conf:
+        instance: '{{ instance.server[0].hostname }}'
+        address: '{{ instance.server[0] | json_query(query) }}'
+        user: '{{ molecule_yml.driver.ssh_user }}'
+        port: '{{ molecule_yml.driver.ssh_port }}'
+        identity_file: '{{ molecule_yml.driver.identity_file }}'
+    vars:
+      query: ip_addresses[?type=='primary-ip'].address | [0]
+    when: instance.changed | bool
+
+
+# Surinkime informaciją apie aukščiau sukurtus serverius ir sugeneruokime
+# Molecule'ės pageidaujamą instance-config
+- name: Create instance-config
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  no_log: '{{ molecule_no_log }}'
+  tasks:
+  - name: Dump instance-config data
+    copy:
+      content: |
+        # Molecule managed
+
+        {{ hostvars | json_query(query) | to_nice_yaml(indent=2) }}
+      dest: '{{ molecule_instance_config }}'
+    vars:
+      query: |
+        * | [?contains(group_names, 'dummy_hosts')].instance_conf
+

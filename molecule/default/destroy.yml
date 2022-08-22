@@ -1,0 +1,27 @@
+---
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  no_log: '{{ molecule_no_log }}'
+  tasks:
+  - name: Destroy instance
+    cherryservers_server:
+      auth_token: '{{ molecule_yml.driver.auth_token }}'
+      project_id: '{{ molecule_yml.driver.project_id }}'
+      hostname: '{{ item.name }}'
+      state: absent
+    register: instance
+    with_items: '{{ molecule_yml.platforms }}'
+  
+  - name: Dump instance config
+    copy:
+      content: |
+        # Molecule managed
+
+        {{ instance_conf | to_json | from_json | to_yaml }}
+      dest: '{{ molecule_instance_config }}'
+    vars:
+      instance_conf: {}
+    when: instance.changed | bool
+
