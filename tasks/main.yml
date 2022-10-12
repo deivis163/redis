@@ -21,7 +21,7 @@
     - regexp: "^bind"
       line: bind "{{  redis_bind_interface  }}"
     - regexp: "^port"
-      line:  bind "{{  redis_bind_interface  }}"
+      line:  port "{{  redis_port  }}"
     - regexp: "^timeout"
       line:  timeout "{{  redis_timeout  }}"
     - regexp: "^maxmemory"
